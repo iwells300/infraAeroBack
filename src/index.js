@@ -31,7 +31,7 @@ app.use(express.json()); // Parsear JSON del body
 // Rutas
 app.use('/api/zonas', zonasRoutes);
 app.use('/api/registros', registrosRoutes);
-app.use('/data', express.static(path.join(__dirname, 'data')));
+app.use('/data', express.static(path.join(__dirname, '../data')));
 
 // Manejo de rutas no encontradas
 app.use((req, res) => {
