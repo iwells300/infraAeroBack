@@ -4,11 +4,17 @@ import dotenv from 'dotenv';
 import zonasRoutes from './routes/zonas.js';
 import registrosRoutes from './routes/registros.js';
 
+import path from 'path';
+import { fileURLToPath } from 'url';
+import express from 'express';
+
 dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 3001;
-const path = require('path');
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // Middlewares
 app.use(cors({
