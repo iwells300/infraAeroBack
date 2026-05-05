@@ -6,7 +6,7 @@ import registrosRoutes from './routes/registros.js';
 
 import path from 'path';
 import { fileURLToPath } from 'url';
-import express from 'express';
+
 
 dotenv.config();
 
