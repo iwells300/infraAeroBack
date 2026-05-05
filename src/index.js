@@ -16,7 +16,7 @@ const PORT = process.env.PORT || 3001;
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
 
 console.log("Directorio actual (__dirname):", __dirname);
 console.log("Buscando carpeta data en:", path.join(__dirname, 'data'));
