@@ -10,7 +10,10 @@ const app = express();
 const PORT = process.env.PORT || 3001;
 
 // Middlewares
-app.use(cors()); // Permitir CORS para el frontend
+app.use(cors({
+  origin: ["https://infraaero.onrender.com", 'http://localhost:5173']
+
+})); // Permitir CORS para el frontend
 app.use(express.json()); // Parsear JSON del body
 
 // Rutas
