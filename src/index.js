@@ -13,7 +13,7 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-const __filename = fileURLToPath(import.meta.url);
+const __filename = fileURLToPath(import.meta.env.VITE_API_URL);
 const __dirname = path.dirname(__filename);
 
 // Middlewares
