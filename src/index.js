@@ -8,6 +8,7 @@ dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 3001;
+const path = require('path');
 
 // Middlewares
 app.use(cors({
@@ -19,6 +20,7 @@ app.use(express.json()); // Parsear JSON del body
 // Rutas
 app.use('/api/zonas', zonasRoutes);
 app.use('/api/registros', registrosRoutes);
+app.use('/data', express.static(path.join(__dirname, 'data')));
 
 // Manejo de rutas no encontradas
 app.use((req, res) => {
