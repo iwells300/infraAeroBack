@@ -1,0 +1,37 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Usuario {
+  id        Int        @id @default(autoincrement())
+  nombre    String
+  email     String     @unique
+  registros Registro[]
+  createdAt DateTime   @default(now())
+}
+
+model Zona {
+  id          String     @id
+  nombre      String
+  descripcion String?
+  metadata    Json?
+  registros   Registro[]
+}
+
+model Registro {
+  id                Int      @id @default(autoincrement())
+  zona_id           String
+  usuario_id        Int
+  fecha             DateTime @default(now())
+  inputs            Json     // Guarda todos los campos del formulario
+  valor_interpolado Float
+  createdAt         DateTime @default(now())
+
+  zona    Zona    @relation(fields: [zona_id], references: [id])
+  usuario Usuario @relation(fields: [usuario_id], references: [id])
+}

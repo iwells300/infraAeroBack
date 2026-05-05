@@ -1,0 +1,64 @@
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import pkg from '@prisma/client';
+const { PrismaClient } = pkg;
+
+const prisma = new PrismaClient({});
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+export const getZonasGeojson = async (req, res) => {
+  try {
+    const geojsonPath = path.join(__dirname, '../../data/zonas.geojson');
+    const data = JSON.parse(fs.readFileSync(geojsonPath, 'utf8'));
+
+    // Buscar el último registro para cada zona y adjuntarlo
+    for (let feature of data.features) {
+      const zonaId = feature.properties.zona_id;
+      const ultimoRegistro = await prisma.registro.findFirst({
+        where: { zona_id: zonaId },
+        orderBy: { fecha: 'desc' }
+      });
+      feature.properties.ultimo_valor = ultimoRegistro ? ultimoRegistro.valor_interpolado : null;
+    }
+
+    res.json(data);
+  } catch (error) {
+    console.error('Error al leer zonas.geojson:', error);
+    res.status(500).json({ error: 'Error interno al obtener las zonas geográficas' });
+  }
+};
+
+export const getZonas = async (req, res) => {
+  try {
+    const zonas = await prisma.zona.findMany();
+    res.json(zonas);
+  } catch (error) {
+    console.error('Error al obtener zonas de la DB:', error);
+    res.status(500).json({ error: 'Error al obtener zonas' });
+  }
+};
+
+export const getZonaById = async (req, res) => {
+  const { id } = req.params;
+  try {
+    const zona = await prisma.zona.findUnique({
+      where: { id },
+      include: {
+        registros: {
+          orderBy: { fecha: 'desc' },
+          take: 1
+        }
+      }
+    });
+
+    if (!zona) return res.status(404).json({ error: 'Zona no encontrada' });
+    
+    // Devolver la zona y su último registro
+    res.json(zona);
+  } catch (error) {
+    console.error('Error al obtener zona:', error);
+    res.status(500).json({ error: 'Error al obtener zona' });
+  }
+};

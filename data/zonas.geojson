@@ -1,0 +1,73 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "zona_id": "Z001",
+        "nombre": "Zona Norte"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -58.45,
+              -34.60
+            ],
+            [
+              -58.45,
+              -34.58
+            ],
+            [
+              -58.42,
+              -34.58
+            ],
+            [
+              -58.42,
+              -34.60
+            ],
+            [
+              -58.45,
+              -34.60
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "zona_id": "Z002",
+        "nombre": "Zona Sur"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -58.42,
+              -34.63
+            ],
+            [
+              -58.42,
+              -34.60
+            ],
+            [
+              -58.38,
+              -34.60
+            ],
+            [
+              -58.38,
+              -34.63
+            ],
+            [
+              -58.42,
+              -34.63
+            ]
+          ]
+        ]
+      }
+    }
+  ]
+}
