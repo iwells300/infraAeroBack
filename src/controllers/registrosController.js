@@ -5,20 +5,12 @@ import { calcularInterpolacion } from '../services/interpolacion.js';
 const prisma = new PrismaClient({});
 
 export const createRegistro = async (req, res) => {
-  const { zona_id, valorPrincipal, fecha, observaciones, dropdownSeleccion, ...otrosInputs } = req.body;
+  const { zona_id, fecha, observaciones, mediciones, valor_interpolado, dropdownSeleccion, ...otrosInputs } = req.body;
 
   try {
     // 1. Validar inputs básicos
-    if (!zona_id || valorPrincipal === undefined) {
-      return res.status(400).json({ error: 'Faltan campos requeridos: zona_id, valorPrincipal' });
-    }
-
-    // 2. Interpolar valor
-    let valor_interpolado;
-    try {
-      valor_interpolado = calcularInterpolacion(zona_id, Number(valorPrincipal));
-    } catch (interpError) {
-      return res.status(400).json({ error: interpError.message });
+    if (!zona_id || valor_interpolado === undefined || !mediciones || mediciones.length === 0) {
+      return res.status(400).json({ error: 'Faltan campos requeridos: zona_id, mediciones, valor_interpolado' });
     }
 
     // Buscar al primer usuario de prueba si no se provee uno
@@ -27,19 +19,19 @@ export const createRegistro = async (req, res) => {
        return res.status(500).json({ error: 'No hay usuarios configurados en el sistema' });
     }
 
-    // 3. Guardar en la base de datos
+    // 2. Guardar en la base de datos
     const registro = await prisma.registro.create({
       data: {
         zona_id,
         usuario_id: usuario.id,
         fecha: fecha ? new Date(fecha) : new Date(),
         inputs: {
-          valorPrincipal,
+          mediciones, // Arreglo de interpolaciones
           observaciones,
           dropdownSeleccion,
           ...otrosInputs
         },
-        valor_interpolado
+        valor_interpolado: Number(valor_interpolado)
       }
     });
 

@@ -10,22 +10,41 @@ const __dirname = path.dirname(__filename);
 
 export const getZonasGeojson = async (req, res) => {
   try {
-    const geojsonPath = path.join(__dirname, '../../data/zonas.geojson');
-    const data = JSON.parse(fs.readFileSync(geojsonPath, 'utf8'));
+    const zonas = await prisma.$queryRaw`
+      SELECT 
+        nombre as zona_id,
+        nombre,
+        ST_AsGeoJSON(wkb_geometry)::json as geometry
+      FROM zonas
+      WHERE wkb_geometry IS NOT NULL AND nombre IS NOT NULL
+    `;
 
-    // Buscar el último registro para cada zona y adjuntarlo
-    for (let feature of data.features) {
-      const zonaId = feature.properties.zona_id;
+    const features = [];
+    
+    for (let zona of zonas) {
+      const zonaId = zona.zona_id;
       const ultimoRegistro = await prisma.registro.findFirst({
         where: { zona_id: zonaId },
         orderBy: { fecha: 'desc' }
       });
-      feature.properties.ultimo_valor = ultimoRegistro ? ultimoRegistro.valor_interpolado : null;
+      
+      features.push({
+        type: 'Feature',
+        properties: {
+          zona_id: zonaId,
+          nombre: zona.nombre,
+          ultimo_valor: ultimoRegistro ? ultimoRegistro.valor_interpolado : null
+        },
+        geometry: zona.geometry
+      });
     }
 
-    res.json(data);
+    res.json({
+      type: 'FeatureCollection',
+      features
+    });
   } catch (error) {
-    console.error('Error al leer zonas.geojson:', error);
+    console.error('Error al generar geojson desde DB:', error);
     res.status(500).json({ error: 'Error interno al obtener las zonas geográficas' });
   }
 };
@@ -44,7 +63,7 @@ export const getZonaById = async (req, res) => {
   const { id } = req.params;
   try {
     const zona = await prisma.zona.findUnique({
-      where: { id },
+      where: { nombre: id },
       include: {
         registros: {
           orderBy: { fecha: 'desc' },
