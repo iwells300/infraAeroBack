@@ -14,20 +14,20 @@ export const getZonasGeojson = async (req, res) => {
       SELECT 
         nombre as zona_id,
         nombre,
-        ST_AsGeoJSON(wkb_geometry)::json as geometry
-      FROM zonas
+        public.ST_AsGeoJSON(wkb_geometry)::json as geometry
+      FROM public.zonas
       WHERE wkb_geometry IS NOT NULL AND nombre IS NOT NULL
     `;
 
     const features = [];
-    
+
     for (let zona of zonas) {
       const zonaId = zona.zona_id;
       const ultimoRegistro = await prisma.registro.findFirst({
         where: { zona_id: zonaId },
         orderBy: { fecha: 'desc' }
       });
-      
+
       features.push({
         type: 'Feature',
         properties: {
@@ -73,7 +73,7 @@ export const getZonaById = async (req, res) => {
     });
 
     if (!zona) return res.status(404).json({ error: 'Zona no encontrada' });
-    
+
     // Devolver la zona y su último registro
     res.json(zona);
   } catch (error) {
