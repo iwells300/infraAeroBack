@@ -11,28 +11,27 @@ model Usuario {
   id        Int        @id @default(autoincrement())
   nombre    String
   email     String     @unique
-  registros Registro[]
   createdAt DateTime   @default(now())
+  registros Registro[]
 }
 
 model Zona {
-  ogc_fid      Int      @id @default(autoincrement())
-  wkb_geometry Unsupported("geometry(MultiPolygon, 4326)")?
-  id           Decimal? @db.Decimal(10, 0)
-  area         Decimal? @db.Decimal(11, 3)
-  pcr          String?  @db.VarChar(100)
-  valorpcr     Decimal? @db.Decimal(10, 0)
-  nombre       String   @unique @db.VarChar(100)
-
+  ogc_fid      Int                      @id @default(autoincrement())
+  wkb_geometry Unsupported("geometry")?
+  id           Decimal?                 @db.Decimal(10, 0)
+  area         Decimal?                 @db.Decimal(11, 3)
+  pcr          String?                  @db.VarChar(100)
+  valorpcr     Decimal?                 @db.Decimal(10, 0)
+  nombre       String                   @unique @db.VarChar(100)
   registros    Registro[]
 
   @@map("zonas")
 }
 
 model Curva {
-  id      Int    @id @default(autoincrement())
-  nombre  String @unique
-  puntos  Json
+  id     Int    @id @default(autoincrement())
+  nombre String @unique
+  puntos Json
 }
 
 model Registro {
@@ -40,10 +39,18 @@ model Registro {
   zona_id           String
   usuario_id        Int
   fecha             DateTime @default(now())
-  inputs            Json     // Guarda todos los campos del formulario
+  inputs            Json
   valor_interpolado Float
   createdAt         DateTime @default(now())
+  usuario           Usuario  @relation(fields: [usuario_id], references: [id])
+  zona              Zona     @relation(fields: [zona_id], references: [nombre])
+}
 
-  zona    Zona    @relation(fields: [zona_id], references: [nombre])
-  usuario Usuario @relation(fields: [usuario_id], references: [id])
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model spatial_ref_sys {
+  srid      Int     @id
+  auth_name String? @db.VarChar(256)
+  auth_srid Int?
+  srtext    String? @db.VarChar(2048)
+  proj4text String? @db.VarChar(2048)
 }
