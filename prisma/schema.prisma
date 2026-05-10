@@ -8,11 +8,12 @@ datasource db {
 }
 
 model Usuario {
-  id        Int        @id @default(autoincrement())
-  nombre    String
-  email     String     @unique
-  createdAt DateTime   @default(now())
-  registros Registro[]
+  id                Int               @id @default(autoincrement())
+  nombre            String
+  email             String            @unique
+  createdAt         DateTime          @default(now())
+  registros         Registro[]
+  grillaRwyEventos  GrillaRwyEvento[]
 }
 
 model Zona {
