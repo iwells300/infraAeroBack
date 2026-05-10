@@ -5,9 +5,17 @@ const prisma = new PrismaClient({});
 
 export const getCurvas = async (req, res) => {
   try {
-    const curvas = await prisma.curva.findMany({
-      orderBy: { nombre: 'asc' }
-    });
+    const curvas = await prisma.$queryRaw`
+      SELECT
+        id,
+        nombre,
+        puntos,
+        defecto,
+        grado
+      FROM public."Curva"
+      ORDER BY nombre ASC
+    `;
+
     res.json(curvas);
   } catch (error) {
     console.error('Error al obtener curvas de la DB:', error);

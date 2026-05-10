@@ -46,6 +46,46 @@ model Registro {
   zona              Zona     @relation(fields: [zona_id], references: [nombre])
 }
 
+model GrillaRwyEvento {
+  id                Int      @id @default(autoincrement())
+  grilla_fid        Int
+  umuestra          String?  @db.VarChar(15)
+  sector            String?  @db.VarChar(20)
+  seccion           String?  @db.VarChar(10)
+  area              Float?
+  fecha             DateTime @default(now())
+  observaciones     String?
+  dropdownSeleccion String?  @db.VarChar(100)
+  mediciones        Json
+  valor_interpolado Float
+  usuario_id        Int
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  usuario           Usuario  @relation(fields: [usuario_id], references: [id])
+
+  @@index([grilla_fid])
+  @@index([fecha])
+  @@map("grilla_rwy_eventos")
+}
+
+model Mantenimiento {
+  id          Int      @id @default(autoincrement())
+  zona_id     String
+  fecha       DateTime
+  fecha_fin   DateTime?
+  hora_inicio String   @db.VarChar(5)
+  hora_fin    String   @db.VarChar(5)
+  tarea       String   @db.VarChar(255)
+  prioridad   String   @db.VarChar(20)
+  estado      String   @default("programado") @db.VarChar(30)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([zona_id])
+  @@index([fecha])
+  @@map("mantenimientos")
+}
+
 /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
 model spatial_ref_sys {
   srid      Int     @id

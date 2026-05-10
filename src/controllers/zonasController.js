@@ -75,7 +75,30 @@ export const getZonaById = async (req, res) => {
     if (!zona) return res.status(404).json({ error: 'Zona no encontrada' });
 
     // Devolver la zona y su último registro
-    res.json(zona);
+    const estructura = await prisma.$queryRaw`
+      SELECT
+        zona_estructura_id,
+        layer_no,
+        layer_role,
+        faarfield_material,
+        faarfield_category,
+        espesor_cm::float8 as espesor_cm,
+        modulus_mpa::float8 as modulus_mpa,
+        modulus_psi::float8 as modulus_psi,
+        rupture_modulus_psi::float8 as rupture_modulus_psi,
+        cbr_rasante::float8 as cbr_rasante,
+        k_value_pci::float8 as k_value_pci,
+        paquete_supuesto,
+        confianza
+      FROM public.zonas_estructuras
+      WHERE nombre_zona = ${id}
+      ORDER BY layer_no ASC
+    `;
+
+    res.json({
+      ...zona,
+      estructura
+    });
   } catch (error) {
     console.error('Error al obtener zona:', error);
     res.status(500).json({ error: 'Error al obtener zona' });
