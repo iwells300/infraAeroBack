@@ -2,7 +2,7 @@ import pkg from '@prisma/client';
 const { PrismaClient } = pkg;
 
 const prisma = new PrismaClient({});
-const GRILLA_RWY_TABLE = 'public."grilla rwy v2"';
+const UNIDADES_MANTENIMIENTO_TABLE = 'public."unidades mantenimiento"';
 
 const normalizeDate = (fecha) => {
   const date = new Date(`${fecha}T00:00:00.000Z`);
@@ -57,22 +57,78 @@ const ensureMantenimientosTable = async () => {
   `);
 };
 
-const findGrillaMantenimiento = async (zonaId) => {
+const findUnidadMantenimiento = async (zonaId) => {
   const rows = await prisma.$queryRawUnsafe(`
     SELECT
       ogc_fid::int as fid,
-      sector,
-      seccion,
-      umuestra,
-      area_2::float8 as area,
+      nombre,
+      unidad::float8 as unidad,
+      unidadm,
+      area::float8 as area,
       pcr,
       valorpcr::float8 as valorpcr
-    FROM ${GRILLA_RWY_TABLE}
+    FROM ${UNIDADES_MANTENIMIENTO_TABLE}
     WHERE ogc_fid = $1
     LIMIT 1
   `, Number(zonaId));
 
   return rows[0] || null;
+};
+
+export const getUnidadesMantenimientoGeojson = async (req, res) => {
+  try {
+    const unidades = await prisma.$queryRawUnsafe(`
+      SELECT
+        ogc_fid::int as fid,
+        nombre,
+        unidad::float8 as unidad,
+        unidadm,
+        area::float8 as area,
+        pcr,
+        valorpcr::float8 as valorpcr,
+        public.ST_AsGeoJSON(wkb_geometry)::json as geometry
+      FROM ${UNIDADES_MANTENIMIENTO_TABLE}
+      WHERE wkb_geometry IS NOT NULL
+      ORDER BY ogc_fid ASC
+    `);
+
+    res.json({
+      type: 'FeatureCollection',
+      features: unidades.map((item) => ({
+        type: 'Feature',
+        properties: {
+          fid: item.fid,
+          nombre: item.nombre,
+          unidad: item.unidad,
+          unidadm: item.unidadm,
+          area: item.area,
+          pcr: item.pcr,
+          valorpcr: item.valorpcr,
+        },
+        geometry: item.geometry,
+      })),
+    });
+  } catch (error) {
+    console.error('Error al generar GeoJSON de unidades de mantenimiento:', error);
+    res.status(500).json({ error: 'Error interno al obtener las unidades de mantenimiento' });
+  }
+};
+
+export const getUnidadMantenimientoByFid = async (req, res) => {
+  const { fid } = req.params;
+
+  try {
+    const unidad = await findUnidadMantenimiento(fid);
+
+    if (!unidad) {
+      return res.status(404).json({ error: 'Unidad de mantenimiento no encontrada' });
+    }
+
+    res.json(unidad);
+  } catch (error) {
+    console.error('Error al obtener unidad de mantenimiento:', error);
+    res.status(500).json({ error: 'Error al obtener la unidad de mantenimiento' });
+  }
 };
 
 export const getMantenimientos = async (req, res) => {
@@ -109,16 +165,15 @@ export const getMantenimientos = async (req, res) => {
         m.*,
         json_build_object(
           'fid', g.ogc_fid,
-          'nombre', CONCAT_WS(' - ', g.sector, NULLIF(g.seccion, '---'), NULLIF(g.umuestra, '---')),
-          'sector', g.sector,
-          'seccion', g.seccion,
-          'umuestra', g.umuestra,
-          'area', g.area_2,
+          'nombre', g.nombre,
+          'unidad', g.unidad,
+          'unidadm', g.unidadm,
+          'area', g.area,
           'pcr', g.pcr,
           'valorpcr', g.valorpcr
         ) as zona
       FROM public.mantenimientos m
-      LEFT JOIN ${GRILLA_RWY_TABLE} g ON g.ogc_fid::text = m.zona_id
+      LEFT JOIN ${UNIDADES_MANTENIMIENTO_TABLE} g ON g.ogc_fid::text = m.zona_id
       ${whereSql}
       ORDER BY m.fecha ASC, m.hora_inicio ASC
     `, ...params);
@@ -163,9 +218,9 @@ export const createMantenimiento = async (req, res) => {
       return res.status(400).json({ error: 'Prioridad invalida' });
     }
 
-    const zona = await findGrillaMantenimiento(zona_id);
+    const zona = await findUnidadMantenimiento(zona_id);
     if (!zona) {
-      return res.status(404).json({ error: 'Sector de grilla no encontrado' });
+      return res.status(404).json({ error: 'Unidad de mantenimiento no encontrada' });
     }
 
     const rows = await prisma.$queryRawUnsafe(`
