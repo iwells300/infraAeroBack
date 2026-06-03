@@ -6,7 +6,12 @@
   "type": "module",
   "scripts": {
     "start": "node src/index.js",
-    "dev": "nodemon src/index.js"
+    "dev": "nodemon src/index.js",
+    "postinstall": "prisma generate",
+    "db:deploy": "prisma migrate deploy",
+    "db:baseline": "prisma migrate resolve --applied 20260507_add_grilla_rwy_eventos",
+    "render:migrate": "node scripts/renderMigrate.js",
+    "render:start": "npm run render:migrate && npm start"
   },
   "keywords": [],
   "author": "",
@@ -15,10 +20,10 @@
     "@prisma/client": "^6.4.1",
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",
-    "express": "^5.2.1"
+    "express": "^5.2.1",
+    "prisma": "^6.4.1"
   },
   "devDependencies": {
-    "nodemon": "^3.1.14",
-    "prisma": "^6.4.1"
+    "nodemon": "^3.1.14"
   }
 }

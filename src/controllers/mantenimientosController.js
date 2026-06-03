@@ -5,11 +5,22 @@ const prisma = new PrismaClient({});
 const UNIDADES_MANTENIMIENTO_TABLE = 'public."unidades mantenimiento"';
 
 const normalizeDate = (fecha) => {
-  const date = new Date(`${fecha}T00:00:00.000Z`);
-  return Number.isNaN(date.getTime()) ? null : date;
+  if (typeof fecha !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(fecha)) return null;
+
+  const [year, month, day] = fecha.split('-').map(Number);
+  const date = new Date(year, month - 1, day);
+  if (
+    date.getFullYear() !== year ||
+    date.getMonth() !== month - 1 ||
+    date.getDate() !== day
+  ) {
+    return null;
+  }
+
+  return `${fecha} 00:00:00`;
 };
 
-const dateKey = (date) => date.toISOString().slice(0, 10);
+const dateKey = (date) => date.slice(0, 10);
 
 const isTimeRangeValid = (horaInicio, horaFin) => {
   const timePattern = /^([01]\d|2[0-3]):[0-5]\d$/;
@@ -149,20 +160,22 @@ export const getMantenimientos = async (req, res) => {
       const desde = normalizeDate(fecha_desde);
       if (!desde) return res.status(400).json({ error: 'fecha_desde invalida' });
       params.push(desde);
-      filters.push(`m.fecha >= $${params.length}`);
+      filters.push(`m.fecha >= $${params.length}::timestamp`);
     }
 
     if (fecha_hasta) {
       const hasta = normalizeDate(fecha_hasta);
       if (!hasta) return res.status(400).json({ error: 'fecha_hasta invalida' });
       params.push(hasta);
-      filters.push(`m.fecha <= $${params.length}`);
+      filters.push(`m.fecha <= $${params.length}::timestamp`);
     }
 
     const whereSql = filters.length ? `WHERE ${filters.join(' AND ')}` : '';
     const mantenimientos = await prisma.$queryRawUnsafe(`
       SELECT
         m.*,
+        to_char(m.fecha, 'YYYY-MM-DD') as fecha_key,
+        to_char(m.fecha_fin, 'YYYY-MM-DD') as fecha_fin_key,
         json_build_object(
           'fid', g.ogc_fid,
           'nombre', g.nombre,
@@ -234,7 +247,7 @@ export const createMantenimiento = async (req, res) => {
         prioridad,
         "updatedAt"
       )
-      VALUES ($1, $2, $3, $4, $5, $6, $7, CURRENT_TIMESTAMP)
+      VALUES ($1, $2::timestamp, $3::timestamp, $4, $5, $6, $7, CURRENT_TIMESTAMP)
       RETURNING *
     `, String(zona_id), fechaNormalizada, fechaFinNormalizada, hora_inicio, hora_fin, tarea, prioridad);
 
